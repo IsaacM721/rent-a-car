@@ -4,7 +4,6 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct WalletView: View {
     @Binding var showAdmin: Bool
@@ -226,7 +225,7 @@ struct RecentActivityCardView: View {
 // MARK: - Offers Section
 
 struct OffersSection: View {
-    @Query(sort: \CarModel.name) var cars: [CarModel]
+    @EnvironmentObject private var carsStore: CarsStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -242,7 +241,7 @@ struct OffersSection: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(cars.prefix(4)) { car in
+                    ForEach(carsStore.cars.prefix(4)) { car in
                         VStack(alignment: .leading, spacing: 0) {
                             CarHeroView(car: car, height: 110)
                                 .frame(width: 180)

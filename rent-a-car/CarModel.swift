@@ -84,5 +84,5 @@ class CarModel {
     }
 }
 
-// Keeps all existing view code working without changes
-typealias Car = CarModel
+// Note: `CarModel` is legacy SwiftData/demo storage.
+// Production inventory uses `Car` (Firestore-backed) in `Models/Car.swift`.

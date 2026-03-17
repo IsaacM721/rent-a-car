@@ -4,16 +4,15 @@
 //
 
 import SwiftUI
-import SwiftData
 
 struct PayWithDOPView: View {
     @Environment(\.dismiss) private var dismiss
-    @Query(sort: \CarModel.name) var cars: [CarModel]
-    @State private var selectedCar: CarModel?
+    @EnvironmentObject private var carsStore: CarsStore
+    @State private var selectedCar: Car?
 
     var body: some View {
         NavigationStack {
-            List(cars) { car in
+            List(carsStore.cars) { car in
                 Button {
                     selectedCar = car
                 } label: {

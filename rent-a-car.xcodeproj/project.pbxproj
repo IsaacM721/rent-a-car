@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		F19900012F9000010028E899 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F19900002F9000010028E899 /* GoogleService-Info.plist */; };
 		F144A6122F67395F00494F05 /* FirebaseAI in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6112F67395F00494F05 /* FirebaseAI */; };
 		F144A6142F67395F00494F05 /* FirebaseAILogic in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6132F67395F00494F05 /* FirebaseAILogic */; };
 		F144A6162F67395F00494F05 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6152F67395F00494F05 /* FirebaseAnalytics */; };
@@ -42,6 +41,7 @@
 		F144A6572F6739CF00494F05 /* StripePaymentSheet in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6562F6739CF00494F05 /* StripePaymentSheet */; };
 		F144A6592F6739CF00494F05 /* StripePayments in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6582F6739CF00494F05 /* StripePayments */; };
 		F144A65B2F6739CF00494F05 /* StripePaymentsUI in Frameworks */ = {isa = PBXBuildFile; productRef = F144A65A2F6739CF00494F05 /* StripePaymentsUI */; };
+		F19900012F9000010028E899 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F19900002F9000010028E899 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -115,11 +115,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F144A65E2F69BBDE00494F05 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				F19900002F9000010028E899 /* GoogleService-Info.plist */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		F17049CB2F609D600028E899 = {
 			isa = PBXGroup;
 			children = (
 				F17049D62F609D600028E899 /* rent-a-car */,
 				F17049D52F609D600028E899 /* Products */,
+				F144A65E2F69BBDE00494F05 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};

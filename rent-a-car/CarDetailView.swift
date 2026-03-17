@@ -103,7 +103,7 @@ struct CarDetailView: View {
 
                         Divider()
 
-                        // Availability / schedule
+                        // Availability
                         VStack(spacing: 0) {
                             Button {
                                 withAnimation(.easeInOut(duration: 0.2)) {
@@ -126,21 +126,10 @@ struct CarDetailView: View {
                             }
 
                             if showSchedule {
-                                VStack(spacing: 0) {
-                                    ForEach(car.schedule) { entry in
-                                        HStack {
-                                            Text(entry.day)
-                                                .font(.system(size: 15))
-                                                .foregroundStyle(entry.isToday ? Color.red : Color.secondary)
-                                            Spacer()
-                                            Text(entry.hours)
-                                                .font(.system(size: 15))
-                                                .foregroundStyle(entry.isToday ? Color.red : Color.primary)
-                                        }
-                                        .padding(.vertical, 5)
-                                    }
-                                }
-                                .padding(.top, 10)
+                                Text(car.isAvailable ? "Available now" : "Available \(car.availableFrom)")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(Color.secondary)
+                                    .padding(.top, 10)
                             }
                         }
 
