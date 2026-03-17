@@ -32,35 +32,57 @@ struct AppRootView: View {
     @State private var selectedTab: AppTab = .map
     @State private var showRentSheet = false
     @State private var showAdmin = false
+    @State private var showLaunch = true
+    @State private var launchOpacity: CGFloat = 1.0
 
     var body: some View {
-        ZStack(alignment: .bottom) {
-            Group {
-                switch selectedTab {
-                case .map:
-                    MapView()
-                case .wallet:
-                    WalletView(showAdmin: $showAdmin)
-                case .saved:
-                    SavedView()
+        ZStack {
+            // Main app content
+            ZStack(alignment: .bottom) {
+                Group {
+                    switch selectedTab {
+                    case .map:
+                        MapView()
+                    case .wallet:
+                        WalletView(showAdmin: $showAdmin)
+                    case .saved:
+                        SavedView()
+                    }
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .ignoresSafeArea(edges: .bottom)
 
-            BottomBar(selectedTab: $selectedTab, showRentSheet: $showRentSheet)
-        }
-        .ignoresSafeArea(edges: .bottom)
-        .sheet(isPresented: $showAdmin) {
-            AdminView()
-        }
-        .alert("Fleet sync error", isPresented: Binding(
-            get: { carsStore.lastErrorMessage != nil },
-            set: { if !$0 { carsStore.clearError() } }
-        )) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text(carsStore.lastErrorMessage ?? "Unknown error.")
+                BottomBar(selectedTab: $selectedTab, showRentSheet: $showRentSheet)
+            }
+            .sheet(isPresented: $showAdmin) {
+                AdminView()
+            }
+            .alert("Fleet sync error", isPresented: Binding(
+                get: { carsStore.lastErrorMessage != nil },
+                set: { if !$0 { carsStore.clearError() } }
+            )) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(carsStore.lastErrorMessage ?? "Unknown error.")
+            }
+
+            // Launch screen overlay
+            if showLaunch {
+                LaunchScreenView()
+                    .opacity(launchOpacity)
+                    .ignoresSafeArea()
+                    .onAppear {
+                        // Hold for 2.2s then fade out
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 2.2) {
+                            withAnimation(.easeInOut(duration: 0.6)) {
+                                launchOpacity = 0
+                            }
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                showLaunch = false
+                            }
+                        }
+                    }
+            }
         }
     }
 }
-

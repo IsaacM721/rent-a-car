@@ -10,8 +10,8 @@ final class CarsStore: ObservableObject {
     private let repo: CarsRepository
     private var listener: ListenerRegistration?
 
-    init(repo: CarsRepository = CarsRepository()) {
-        self.repo = repo
+    init(repo: CarsRepository? = nil) {
+        self.repo = repo ?? CarsRepository()
     }
 
     func start() {

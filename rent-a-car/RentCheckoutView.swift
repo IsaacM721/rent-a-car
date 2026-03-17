@@ -272,7 +272,7 @@ struct PriceRow: View {
 // MARK: - Booking Confirmation View
 
 struct BookingConfirmationView: View {
-    let car: CarModel
+    let car: Car
     let startDate: Date
     let endDate: Date
     let total: Double

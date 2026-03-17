@@ -41,12 +41,10 @@
 		F144A6572F6739CF00494F05 /* StripePaymentSheet in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6562F6739CF00494F05 /* StripePaymentSheet */; };
 		F144A6592F6739CF00494F05 /* StripePayments in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6582F6739CF00494F05 /* StripePayments */; };
 		F144A65B2F6739CF00494F05 /* StripePaymentsUI in Frameworks */ = {isa = PBXBuildFile; productRef = F144A65A2F6739CF00494F05 /* StripePaymentsUI */; };
-		F19900012F9000010028E899 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = F19900002F9000010028E899 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		F17049D42F609D600028E899 /* rent-a-car.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "rent-a-car.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		F19900002F9000010028E899 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -118,7 +116,6 @@
 		F144A65E2F69BBDE00494F05 /* Recovered References */ = {
 			isa = PBXGroup;
 			children = (
-				F19900002F9000010028E899 /* GoogleService-Info.plist */,
 			);
 			name = "Recovered References";
 			sourceTree = "<group>";
@@ -242,7 +239,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				F19900012F9000010028E899 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

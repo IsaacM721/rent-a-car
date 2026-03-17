@@ -25,13 +25,16 @@ struct BottomBar: View {
                 selectedTab = .saved
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.top, 10)
-        .padding(.bottom, 4)
-        .background(.regularMaterial)
-        .overlay(alignment: .top) {
-            Divider()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background {
+            Capsule()
+                .fill(.ultraThinMaterial)
         }
+        .clipShape(Capsule())
+        .shadow(color: .black.opacity(0.15), radius: 20, x: 0, y: 8)
+        .padding(.horizontal, 32)
+        .padding(.bottom, 24)
     }
 }
 
