@@ -1,0 +1,33 @@
+<h2>MotoresRD — First Decision: Platform</h2>
+<p class="subtitle">This choice shapes the entire tech stack. In the Dominican Republic, Android holds ~78% of the smartphone market.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>iOS Only (Swift / SwiftUI)</h3>
+      <p>Ship fast. Match your existing codebase. Build the rider + driver apps in SwiftUI like you already know. Get to market first, then expand later.</p>
+      <p style="color:#e67e22;font-size:0.85em;margin-top:8px">⚠ Reaches ~22% of DR smartphone users</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Cross-Platform (React Native)</h3>
+      <p>One codebase, both iOS and Android. Widely used for Uber-style apps (Lyft, Shopify use it). JavaScript/TypeScript — different from Swift but massive community.</p>
+      <p style="color:#27ae60;font-size:0.85em;margin-top:8px">✓ Reaches 100% of DR smartphone users</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Cross-Platform (Flutter)</h3>
+      <p>Google's framework. Dart language. Beautiful native-feeling UIs on both platforms. Growing fast and well-suited for ride-hailing apps.</p>
+      <p style="color:#27ae60;font-size:0.85em;margin-top:8px">✓ Reaches 100% of DR smartphone users</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;padding:16px;background:#1a1a2e;border-radius:8px;border-left:3px solid #6c63ff">
+  <p style="margin:0;font-size:0.9em;color:#aaa"><strong style="color:#fff">My recommendation:</strong> B — React Native. The DR market is Android-heavy and ride-hailing is won on driver density, which means you need as many drivers as possible on day one. React Native also has battle-tested libraries specifically for ride-hailing (maps, sockets, payments).</p>
+</div>

@@ -1,0 +1,33 @@
+<h2>Backend: Where does the real-time magic live?</h2>
+<p class="subtitle">This powers GPS tracking, ride matching, driver availability, and the 5% cut logic.</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Firebase (Google)</h3>
+      <p>The industry standard for ride-hailing MVPs. Real-time database, auth, push notifications, and cloud functions all in one. Scales automatically. Most Uber clones are built on this.</p>
+      <p style="color:#27ae60;font-size:0.85em;margin-top:8px">✓ Real-time GPS out of the box &nbsp;·&nbsp; ✓ Free tier is generous &nbsp;·&nbsp; ✓ SwiftUI SDK is excellent</p>
+    </div>
+  </div>
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Supabase + PostgreSQL</h3>
+      <p>Open-source Firebase alternative. Real-time subscriptions, Postgres database, auth. You own your data. Good Swift SDK.</p>
+      <p style="color:#27ae60;font-size:0.85em;margin-top:8px">✓ You own the data &nbsp;·&nbsp; ✓ SQL = easier reporting &nbsp;·&nbsp; ⚠ Real-time less battle-tested than Firebase</p>
+    </div>
+  </div>
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Laravel API (your existing stack)</h3>
+      <p>Build a custom backend with the Laravel skills you already have from motores.rd. Full control, WebSockets via Reverb, connect to MySQL.</p>
+      <p style="color:#e67e22;font-size:0.85em;margin-top:8px">✓ You know this stack &nbsp;·&nbsp; ⚠ More work to build real-time GPS &nbsp;·&nbsp; ⚠ Slowest to launch</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:24px;padding:16px;background:#1a1a2e;border-radius:8px;border-left:3px solid #6c63ff">
+  <p style="margin:0;font-size:0.9em;color:#aaa"><strong style="color:#fff">My recommendation:</strong> A — Firebase. Real-time driver location on a map is the hardest part of this app. Firebase Realtime Database was literally built for this use case. You'll be live in weeks, not months.</p>
+</div>
