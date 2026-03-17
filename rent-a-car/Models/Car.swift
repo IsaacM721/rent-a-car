@@ -1,5 +1,5 @@
 import CoreLocation
-import FirebaseFirestoreSwift
+import FirebaseFirestore
 import Foundation
 import SwiftUI
 

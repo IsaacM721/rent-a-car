@@ -1,5 +1,4 @@
 import FirebaseFirestore
-import FirebaseFirestoreSwift
 import Foundation
 
 final class CarsRepository {
@@ -33,7 +32,7 @@ final class CarsRepository {
         let ref = carsCollection.document()
         var newCar = car
         newCar.docId = ref.documentID
-        try await FirebaseAsync.withCheckedThrowingContinuation { done in
+        try await FirebaseAsync.withCheckedThrowingContinuation { (done: (Result<Void, Error>) -> Void) in
             do {
                 try ref.setData(from: newCar, merge: false) { error in
                     if let error { done(.failure(error)) }
@@ -50,7 +49,7 @@ final class CarsRepository {
         guard let id = car.docId, !id.isEmpty else {
             throw NSError(domain: "CarsRepository", code: 1, userInfo: [NSLocalizedDescriptionKey: "Missing car docId for update"])
         }
-        try await FirebaseAsync.withCheckedThrowingContinuation { done in
+        try await FirebaseAsync.withCheckedThrowingContinuation { (done: (Result<Void, Error>) -> Void) in
             do {
                 try carsCollection.document(id).setData(from: car, merge: true) { error in
                     if let error { done(.failure(error)) }
@@ -63,7 +62,7 @@ final class CarsRepository {
     }
 
     func deleteCar(id: String) async throws {
-        try await FirebaseAsync.withCheckedThrowingContinuation { done in
+        try await FirebaseAsync.withCheckedThrowingContinuation { (done: (Result<Void, Error>) -> Void) in
             self.carsCollection.document(id).delete { error in
                 if let error { done(.failure(error)) }
                 else { done(.success(())) }
