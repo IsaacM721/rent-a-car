@@ -5,15 +5,14 @@
 
 import SwiftUI
 import MapKit
-import SwiftData
 
 enum MapTab {
     case map, forYou
 }
 
 struct MapView: View {
-    @Query var cars: [CarModel]
-    @State private var selectedCar: CarModel?
+    @EnvironmentObject private var carsStore: CarsStore
+    @State private var selectedCar: Car?
     @State private var activeTab: MapTab = .map
     @State private var showPayWithDOP = false
     @State private var showCarDetail = false
@@ -28,7 +27,7 @@ struct MapView: View {
         ZStack(alignment: .top) {
             // Map
             Map(position: $cameraPosition) {
-                ForEach(cars) { car in
+                ForEach(carsStore.cars) { car in
                     Annotation("", coordinate: car.coordinate) {
                         Button {
                             selectedCar = car
@@ -165,9 +164,9 @@ struct MapView: View {
             }
         }
         .onAppear {
-            if selectedCar == nil { selectedCar = cars.first }
+            if selectedCar == nil { selectedCar = carsStore.cars.first }
         }
-        .onChange(of: cars) { _, new in
+        .onChange(of: carsStore.cars) { _, new in
             if selectedCar == nil { selectedCar = new.first }
         }
         .sheet(isPresented: $showPayWithDOP) {
@@ -182,7 +181,7 @@ struct MapView: View {
 }
 
 struct MapCarCard: View {
-    let car: CarModel
+    let car: Car
 
     var body: some View {
         VStack(spacing: 0) {

@@ -4,16 +4,15 @@
 //
 
 import SwiftUI
-import SwiftData
 import PhotosUI
 import UIKit
 
 struct VehicleFormView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var context
+    @EnvironmentObject private var carsStore: CarsStore
 
     // If non-nil, we're editing an existing car
-    var car: CarModel?
+    var car: Car?
 
     // Fields
     @State private var name = ""
@@ -28,12 +27,12 @@ struct VehicleFormView: View {
     @State private var longitude = "-69.9312"
     @State private var logoInitials = ""
     @State private var logoColor = Color(red: 0.2, green: 0.2, blue: 0.8)
-    @State private var schedule: [DaySchedule] = DaySchedule.defaultWeek
 
-    // Images
-    @State private var existingPaths: [String] = []
+    // Photos (MVP: URLs; upload added in next task)
+    @State private var photoURLs: [String] = []
     @State private var newImages: [UIImage] = []
     @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var isSaving = false
 
     let vehicleTypes = ["Sedan", "SUV", "Hatchback", "Pickup", "Van", "Convertible"]
     let priceLevels = ["$", "$$", "$$$"]
@@ -103,19 +102,16 @@ struct VehicleFormView: View {
                 }
 
                 Section("Photos") {
-                    if !existingPaths.isEmpty || !newImages.isEmpty {
+                    if !photoURLs.isEmpty || !newImages.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 8) {
-                                ForEach(existingPaths, id: \.self) { path in
-                                    if let img = SeedManager.loadImage(path: path) {
-                                        ExistingImageTile(image: img) {
-                                            existingPaths.removeAll { $0 == path }
-                                            SeedManager.deleteImage(path: path)
-                                        }
+                                ForEach(photoURLs, id: \.self) { urlString in
+                                    RemoteImageTile(urlString: urlString) {
+                                        photoURLs.removeAll { $0 == urlString }
                                     }
                                 }
                                 ForEach(Array(newImages.enumerated()), id: \.offset) { index, img in
-                                    ExistingImageTile(image: img) {
+                                    LocalImageTile(image: img) {
                                         newImages.remove(at: index)
                                     }
                                 }
@@ -136,16 +132,6 @@ struct VehicleFormView: View {
                     }
                 }
 
-                Section("Weekly Schedule") {
-                    ForEach($schedule) { $entry in
-                        HStack {
-                            Text(entry.day)
-                                .frame(width: 100, alignment: .leading)
-                            TextField("Hours", text: $entry.hours)
-                                .foregroundStyle(Color.secondary)
-                        }
-                    }
-                }
             }
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
@@ -177,10 +163,9 @@ struct VehicleFormView: View {
         address = car.address
         latitude = String(car.latitude)
         longitude = String(car.longitude)
-        logoInitials = car.logoInitials
+        logoInitials = car.logo.initials
         logoColor = car.logoColor
-        schedule = car.schedule
-        existingPaths = car.imagePaths
+        photoURLs = car.photoURLs
     }
 
     private func loadPickerItems(_ items: [PhotosPickerItem]) {
@@ -195,22 +180,29 @@ struct VehicleFormView: View {
     }
 
     private func save() {
+        guard !isSaving else { return }
+        isSaving = true
+
         let rgb = logoColor.rgbComponents
         let lat = Double(latitude) ?? 18.4861
         let lon = Double(longitude) ?? -69.9312
 
-        let target = car ?? CarModel(
-            name: name, type: type, priceLevel: priceLevel, neighborhood: neighborhood
+        var target = car ?? Car(
+            docId: nil,
+            name: name,
+            type: type,
+            priceLevel: priceLevel,
+            neighborhood: neighborhood,
+            isAvailable: isAvailable,
+            availableFrom: availableFrom,
+            details: details,
+            address: address,
+            latitude: lat,
+            longitude: lon,
+            photoURLs: photoURLs,
+            logo: .init(r: rgb.r, g: rgb.g, b: rgb.b, initials: logoInitials),
+            isActive: true
         )
-
-        // Save any new images
-        var allPaths = existingPaths
-        for (index, image) in newImages.enumerated() {
-            let nextIndex = existingPaths.count + index
-            if let path = try? SeedManager.saveImage(image, forCar: target.id, index: nextIndex) {
-                allPaths.append(path)
-            }
-        }
 
         target.name = name
         target.type = type
@@ -222,34 +214,76 @@ struct VehicleFormView: View {
         target.address = address
         target.latitude = lat
         target.longitude = lon
-        target.logoColorR = rgb.r
-        target.logoColorG = rgb.g
-        target.logoColorB = rgb.b
-        target.logoInitials = logoInitials
-        target.schedule = schedule
-        target.imagePaths = allPaths
+        target.photoURLs = photoURLs
+        target.logo = .init(r: rgb.r, g: rgb.g, b: rgb.b, initials: logoInitials)
 
-        if car == nil { context.insert(target) }
-        dismiss()
+        Task {
+            do {
+                let storage = StorageService()
+                if target.docId == nil {
+                    // Create first to get a stable docId for storage paths.
+                    let newId = try await carsStore.create(car: target)
+                    target.docId = newId
+                }
+
+                if !newImages.isEmpty, let baseId = target.docId, !baseId.isEmpty {
+                    for (idx, image) in newImages.enumerated() {
+                        let path = "cars/\(baseId)/photo-\(idx)-\(UUID().uuidString).jpg"
+                        let url = try await storage.uploadJPEG(image, path: path)
+                        target.photoURLs.append(url.absoluteString)
+                    }
+                    newImages = []
+                }
+
+                try await carsStore.update(car: target)
+                dismiss()
+            } catch {
+                // Simple MVP: fail silently and keep form open
+                // (We can add an alert UX next pass)
+                print("Failed to save car: \(error)")
+                isSaving = false
+            }
+        }
     }
 }
 
 // MARK: - Helpers
 
-private struct ExistingImageTile: View {
-    let image: UIImage
+extension Color {
+    var rgbComponents: (r: Double, g: Double, b: Double) {
+        let ui = UIColor(self)
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
+        return (Double(r), Double(g), Double(b))
+    }
+}
+
+private struct RemoteImageTile: View {
+    let urlString: String
     let onRemove: () -> Void
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
-            Image(uiImage: image)
-                .resizable()
-                .scaledToFill()
+            if let url = URL(string: urlString) {
+                AsyncImage(url: url) { phase in
+                    switch phase {
+                    case .success(let image):
+                        image
+                            .resizable()
+                            .scaledToFill()
+                    default:
+                        Color(.systemGray5)
+                    }
+                }
                 .frame(width: 80, height: 80)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
-            Button {
-                onRemove()
-            } label: {
+            } else {
+                Color(.systemGray5)
+                    .frame(width: 80, height: 80)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+            }
+
+            Button(action: onRemove) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 18))
                     .foregroundStyle(.white)
@@ -260,11 +294,25 @@ private struct ExistingImageTile: View {
     }
 }
 
-extension Color {
-    var rgbComponents: (r: Double, g: Double, b: Double) {
-        let ui = UIColor(self)
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        ui.getRed(&r, green: &g, blue: &b, alpha: &a)
-        return (Double(r), Double(g), Double(b))
+private struct LocalImageTile: View {
+    let image: UIImage
+    let onRemove: () -> Void
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Image(uiImage: image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+            Button(action: onRemove) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundStyle(.white)
+                    .background(Color.black.opacity(0.5), in: Circle())
+            }
+            .padding(4)
+        }
     }
 }

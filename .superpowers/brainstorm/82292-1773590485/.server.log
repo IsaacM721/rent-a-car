@@ -1,0 +1,5 @@
+{"type":"server-started","port":65512,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:65512","screen_dir":"/Users/isaacmendezrosario/rent-a-car/.superpowers/brainstorm/82292-1773590485"}
+{"type":"screen-added","file":"/Users/isaacmendezrosario/rent-a-car/.superpowers/brainstorm/82292-1773590485/platform.html"}
+{"type":"screen-added","file":"/Users/isaacmendezrosario/rent-a-car/.superpowers/brainstorm/82292-1773590485/waiting-1.html"}
+{"type":"screen-added","file":"/Users/isaacmendezrosario/rent-a-car/.superpowers/brainstorm/82292-1773590485/backend.html"}
+{"type":"server-stopped","reason":"idle timeout"}

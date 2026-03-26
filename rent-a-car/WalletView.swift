@@ -3,12 +3,16 @@
 //  rent-a-car
 //
 
+import RevenueCatUI
 import SwiftUI
-import SwiftData
 
 struct WalletView: View {
     @Binding var showAdmin: Bool
+    @EnvironmentObject private var subscriptionService: SubscriptionService
+
     @State private var showSaved = false
+    @State private var showPaywall = false
+    @State private var showCustomerCenter = false
     @State private var balanceInDOP = true
 
     var body: some View {
@@ -16,6 +20,14 @@ struct WalletView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 16) {
                     BalanceCardView(balanceInDOP: $balanceInDOP)
+
+                    // Show Pro banner if not subscribed, manage subscription if subscribed
+                    if subscriptionService.isPro {
+                        ProStatusCardView(showCustomerCenter: $showCustomerCenter)
+                    } else {
+                        UpgradeToProCardView(showPaywall: $showPaywall)
+                    }
+
                     CompleteProfileCardView()
                     RecentActivityCardView()
                     OffersSection()
@@ -33,6 +45,12 @@ struct WalletView: View {
                         }
                         Button { showAdmin = true } label: {
                             Label("Manage Vehicles", systemImage: "wrench.and.screwdriver")
+                        }
+                        // Customer Center: manage / cancel subscription from within the app
+                        if subscriptionService.isPro {
+                            Button { showCustomerCenter = true } label: {
+                                Label("Manage Subscription", systemImage: "creditcard")
+                            }
                         }
                     } label: {
                         Image(systemName: "person")
@@ -61,6 +79,27 @@ struct WalletView: View {
         }
         .sheet(isPresented: $showSaved) {
             SavedView()
+        }
+        // RevenueCat Paywall sheet
+        .sheet(isPresented: $showPaywall) {
+            MotoresProPaywallView()
+        }
+        // RevenueCat Customer Center sheet
+        .presentCustomerCenter(isPresented: $showCustomerCenter) {
+            showCustomerCenter = false
+        }
+        // Surface any subscription errors
+        .alert(
+            "Subscription Error",
+            isPresented: Binding(
+                get: { subscriptionService.lastError != nil },
+                set: { if !$0 { subscriptionService.lastError = nil } }
+            ),
+            presenting: subscriptionService.lastError
+        ) { _ in
+            Button("OK", role: .cancel) {}
+        } message: { error in
+            Text(error.localizedDescription)
         }
     }
 }
@@ -226,7 +265,7 @@ struct RecentActivityCardView: View {
 // MARK: - Offers Section
 
 struct OffersSection: View {
-    @Query(sort: \CarModel.name) var cars: [CarModel]
+    @EnvironmentObject private var carsStore: CarsStore
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -242,7 +281,7 @@ struct OffersSection: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
-                    ForEach(cars.prefix(4)) { car in
+                    ForEach(carsStore.cars.prefix(4)) { car in
                         VStack(alignment: .leading, spacing: 0) {
                             CarHeroView(car: car, height: 110)
                                 .frame(width: 180)
@@ -267,8 +306,83 @@ struct OffersSection: View {
     }
 }
 
+// MARK: - Upgrade to Pro Card
+
+/// Shown when the user does not have the Pro entitlement.
+/// Tapping it opens the RevenueCat Paywall.
+struct UpgradeToProCardView: View {
+    @Binding var showPaywall: Bool
+
+    var body: some View {
+        Button { showPaywall = true } label: {
+            HStack(spacing: 14) {
+                Image(systemName: "crown.fill")
+                    .font(.system(size: 22))
+                    .foregroundStyle(.yellow)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("Upgrade to Motores RD Pro")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Color.primary)
+                    Text("Monthly & yearly plans available")
+                        .font(.system(size: 13))
+                        .foregroundStyle(Color.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Color.secondary)
+            }
+            .padding(16)
+            .background(Color(.systemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Pro Status Card
+
+/// Shown when the user has an active Pro entitlement.
+/// Tapping "Manage" opens RevenueCat Customer Center.
+struct ProStatusCardView: View {
+    @Binding var showCustomerCenter: Bool
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(systemName: "crown.fill")
+                .font(.system(size: 22))
+                .foregroundStyle(.yellow)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Motores RD Pro")
+                    .font(.system(size: 15, weight: .semibold))
+                Text("Active subscription")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Color.secondary)
+            }
+
+            Spacer()
+
+            Button("Manage") { showCustomerCenter = true }
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 7)
+                .background(Color.black)
+                .clipShape(Capsule())
+        }
+        .padding(16)
+        .background(Color(.systemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
 #Preview {
     WalletView(showAdmin: .constant(false))
+        .environmentObject(SubscriptionService())
         .safeAreaInset(edge: .bottom) {
             BottomBar(
                 selectedTab: .constant(.wallet),

@@ -4,15 +4,14 @@
 //
 
 import SwiftUI
-import SwiftData
+import UniformTypeIdentifiers
 
 struct AdminView: View {
     @Environment(\.dismiss) private var dismiss
-    @Environment(\.modelContext) private var context
-    @Query(sort: \CarModel.name) var cars: [CarModel]
+    @EnvironmentObject private var carsStore: CarsStore
 
     @State private var showAddForm = false
-    @State private var editingCar: CarModel?
+    @State private var editingCar: Car?
     @State private var exportURL: URL?
     @State private var showShareSheet = false
     @State private var showImporter = false
@@ -24,7 +23,7 @@ struct AdminView: View {
     var body: some View {
         NavigationStack {
             List {
-                ForEach(cars) { car in
+                ForEach(carsStore.cars) { car in
                     Button {
                         editingCar = car
                     } label: {
@@ -130,35 +129,28 @@ struct AdminView: View {
 
     private func deleteCars(at offsets: IndexSet) {
         for index in offsets {
-            let car = cars[index]
-            for path in car.imagePaths {
-                SeedManager.deleteImage(path: path)
+            let car = carsStore.cars[index]
+            if let id = car.docId {
+                Task {
+                    do {
+                        try await carsStore.delete(id: id)
+                    } catch {
+                        errorMessage = error.localizedDescription
+                        showError = true
+                    }
+                }
             }
-            context.delete(car)
         }
     }
 
     private func exportSeed() {
-        do {
-            exportURL = try SeedManager.export(cars: cars)
-            showShareSheet = true
-        } catch {
-            errorMessage = error.localizedDescription
-            showError = true
-        }
+        errorMessage = "Seed export is disabled while using Firestore inventory."
+        showError = true
     }
 
     private func performImport() {
-        guard let url = importURL else { return }
-        // Security-scoped resource access needed for Files-picked URLs
-        let accessing = url.startAccessingSecurityScopedResource()
-        defer { if accessing { url.stopAccessingSecurityScopedResource() } }
-        do {
-            try SeedManager.importSeed(from: url, context: context)
-        } catch {
-            errorMessage = error.localizedDescription
-            showError = true
-        }
+        errorMessage = "Seed import is disabled while using Firestore inventory."
+        showError = true
     }
 }
 
