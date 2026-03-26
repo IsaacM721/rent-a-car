@@ -5,24 +5,32 @@
 //  Created by Isaac Mendez on 3/10/26.
 //
 import FirebaseCore
+import RevenueCat
 import SwiftUI
 
 @main
 struct rent_a_carApp: App {
     @StateObject private var carsStore = CarsStore()
+    @StateObject private var subscriptionService = SubscriptionService()
 
     init() {
+        // Configure Firebase
         FirebaseApp.configure()
         #if DEBUG
         assert(FirebaseApp.app() != nil, "Firebase failed to configure. Check GoogleService-Info.plist is in the app target and Copy Bundle Resources.")
         #endif
+
+        // Configure RevenueCat — must happen before any Purchases.shared calls
+        SubscriptionService.configure()
     }
 
     var body: some Scene {
         WindowGroup {
             AppRootView()
                 .environmentObject(carsStore)
+                .environmentObject(subscriptionService)
                 .onAppear { carsStore.start() }
+                .task { await subscriptionService.refresh() }
         }
     }
 }
