@@ -3,7 +3,6 @@
 //  rent-a-car
 //
 
-import RevenueCatUI
 import SwiftUI
 
 struct WalletView: View {
@@ -83,23 +82,6 @@ struct WalletView: View {
         // RevenueCat Paywall sheet
         .sheet(isPresented: $showPaywall) {
             MotoresProPaywallView()
-        }
-        // RevenueCat Customer Center sheet
-        .presentCustomerCenter(isPresented: $showCustomerCenter) {
-            showCustomerCenter = false
-        }
-        // Surface any subscription errors
-        .alert(
-            "Subscription Error",
-            isPresented: Binding(
-                get: { subscriptionService.lastError != nil },
-                set: { if !$0 { subscriptionService.lastError = nil } }
-            ),
-            presenting: subscriptionService.lastError
-        ) { _ in
-            Button("OK", role: .cancel) {}
-        } message: { error in
-            Text(error.localizedDescription)
         }
     }
 }

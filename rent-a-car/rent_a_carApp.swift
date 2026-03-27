@@ -5,7 +5,6 @@
 //  Created by Isaac Mendez on 3/10/26.
 //
 import FirebaseCore
-import RevenueCat
 import SwiftUI
 
 @main

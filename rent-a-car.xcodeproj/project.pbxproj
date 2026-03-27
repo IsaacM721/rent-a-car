@@ -263,7 +263,7 @@
 				CODE_SIGN_ENTITLEMENTS = "rent-a-car/rent_a_car.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = XGSF2TNL24;
+				DEVELOPMENT_TEAM = XRNDMCEG33;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "rent-a-car/Info.plist";
@@ -300,7 +300,7 @@
 				CODE_SIGN_ENTITLEMENTS = "rent-a-car/rent_a_car.entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = XGSF2TNL24;
+				DEVELOPMENT_TEAM = XRNDMCEG33;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "rent-a-car/Info.plist";
