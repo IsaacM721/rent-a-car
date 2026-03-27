@@ -11,14 +11,14 @@ final class StorageService {
         }
 
         let ref = storage.reference(withPath: path)
-        _ = try await FirebaseAsync.withCheckedThrowingContinuation { (done: (Result<Void, Error>) -> Void) in
+        _ = try await FirebaseAsync.withCheckedThrowingContinuation { (done: @escaping (Result<Void, Error>) -> Void) in
             ref.putData(data, metadata: nil) { _, error in
                 if let error { done(.failure(error)) }
                 else { done(.success(())) }
             }
         }
 
-        return try await FirebaseAsync.withCheckedThrowingContinuation { (done: (Result<URL, Error>) -> Void) in
+        return try await FirebaseAsync.withCheckedThrowingContinuation { (done: @escaping (Result<URL, Error>) -> Void) in
             ref.downloadURL { url, error in
                 if let error { done(.failure(error)) }
                 else if let url { done(.success(url)) }
