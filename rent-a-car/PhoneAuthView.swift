@@ -100,6 +100,17 @@ struct PhoneAuthView: View {
                 )
             }
             .disabled(phoneNumber.filter(\.isNumber).count < 10 || auth.isLoading)
+
+            Button {
+                Task { await auth.skipPhoneAuth() }
+            } label: {
+                Text("Skip for now")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+            .disabled(auth.isLoading)
         }
     }
 

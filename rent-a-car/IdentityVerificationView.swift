@@ -1,3 +1,4 @@
+import FirebaseAuth
 import PhotosUI
 import SwiftUI
 
@@ -141,18 +142,14 @@ struct IdentityVerificationView: View {
 
     private func uploadPassport() async {
         guard let uid = auth.currentUser?.uid,
-              let image = passportImage,
-              let jpegData = image.jpegData(compressionQuality: 0.85) else { return }
+              let image = passportImage else { return }
 
         isUploading = true
         uploadError = nil
 
         do {
-            let url = try await storageService.uploadJPEG(
-                jpegData,
-                path: "passports/\(uid).jpg"
-            )
-            try await userRepo.markPassportVerified(uid: uid, passportURL: url)
+            let url = try await storageService.uploadJPEG(image, path: "passports/\(uid).jpg")
+            try await userRepo.markPassportVerified(uid: uid, passportURL: url.absoluteString)
             dismiss()
         } catch {
             uploadError = "Upload failed: \(error.localizedDescription)"

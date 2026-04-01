@@ -41,10 +41,12 @@
 		F144A6572F6739CF00494F05 /* StripePaymentSheet in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6562F6739CF00494F05 /* StripePaymentSheet */; };
 		F144A6592F6739CF00494F05 /* StripePayments in Frameworks */ = {isa = PBXBuildFile; productRef = F144A6582F6739CF00494F05 /* StripePayments */; };
 		F144A65B2F6739CF00494F05 /* StripePaymentsUI in Frameworks */ = {isa = PBXBuildFile; productRef = F144A65A2F6739CF00494F05 /* StripePaymentsUI */; };
+		F1E627602F7CB1CC001F33AC /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F1E6275F2F7CB1CB001F33AC /* OnboardingView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		F17049D42F609D600028E899 /* rent-a-car.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "rent-a-car.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F1E6275F2F7CB1CB001F33AC /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -126,6 +128,7 @@
 				F17049D62F609D600028E899 /* rent-a-car */,
 				F17049D52F609D600028E899 /* Products */,
 				F144A65E2F69BBDE00494F05 /* Recovered References */,
+				F1E6275F2F7CB1CB001F33AC /* OnboardingView.swift */,
 			);
 			sourceTree = "<group>";
 		};
@@ -249,6 +252,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F1E627602F7CB1CC001F33AC /* OnboardingView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

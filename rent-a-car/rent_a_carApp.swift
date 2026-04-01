@@ -9,6 +9,7 @@ import SwiftUI
 
 @main
 struct rent_a_carApp: App {
+    @StateObject private var auth = AuthService()
     @StateObject private var carsStore = CarsStore()
     @StateObject private var subscriptionService = SubscriptionService()
 
@@ -25,7 +26,8 @@ struct rent_a_carApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRootView()
+            RootGateView()
+                .environmentObject(auth)
                 .environmentObject(carsStore)
                 .environmentObject(subscriptionService)
                 .onAppear { carsStore.start() }
@@ -34,7 +36,35 @@ struct rent_a_carApp: App {
     }
 }
 
-struct AppRootView: View {
+// MARK: - Root Gate
+// Decides which screen to show based on auth + onboarding state.
+
+struct RootGateView: View {
+    @EnvironmentObject private var auth: AuthService
+
+    var body: some View {
+        Group {
+            if !auth.isLoggedIn {
+                // Not logged in → phone auth
+                PhoneAuthView()
+            } else if !auth.hasCompletedOnboarding {
+                // Logged in but first time → onboarding wizard
+                OnboardingView {
+                    auth.hasCompletedOnboarding = true
+                }
+            } else {
+                // Fully onboarded → main app
+                MainAppView()
+            }
+        }
+        .animation(.easeInOut(duration: 0.35), value: auth.isLoggedIn)
+        .animation(.easeInOut(duration: 0.35), value: auth.hasCompletedOnboarding)
+    }
+}
+
+// MARK: - Main App (previously AppRootView)
+
+struct MainAppView: View {
     @EnvironmentObject private var carsStore: CarsStore
     @State private var selectedTab: AppTab = .map
     @State private var showRentSheet = false

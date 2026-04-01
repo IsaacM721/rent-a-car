@@ -4,6 +4,7 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct RentCheckoutView: View {
     let car: Car
@@ -95,6 +96,41 @@ struct RentCheckoutView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.bottom, 8)
+                    }
+
+                    Divider()
+
+                    // Pickup location
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Pickup Location")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Color.secondary)
+                            .tracking(0.5)
+                            .padding(.horizontal, 20)
+                            .padding(.top, 20)
+
+                        HStack(spacing: 16) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 10)
+                                    .fill(Color(.systemGray5))
+                                    .frame(width: 38, height: 38)
+                                Image(systemName: "mappin.and.ellipse")
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(Color.primary)
+                            }
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(car.neighborhood)
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(Color.primary)
+                                Text(car.address)
+                                    .font(.system(size: 13))
+                                    .foregroundStyle(Color.secondary)
+                            }
+                            Spacer()
+                        }
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 20)
+                        .background(Color(.systemBackground))
                     }
 
                     Divider()
@@ -278,6 +314,8 @@ struct BookingConfirmationView: View {
     let total: Double
     @Environment(\.dismiss) private var dismiss
 
+    @State private var showMapPicker = false
+
     private let dateFormatter: DateFormatter = {
         let f = DateFormatter()
         f.dateStyle = .medium
@@ -316,6 +354,26 @@ struct BookingConfirmationView: View {
                         ConfirmationRow(label: "Drop-off", value: dateFormatter.string(from: endDate))
                         Divider().padding(.leading, 20)
                         ConfirmationRow(label: "Total", value: "$\(String(format: "%.2f", total))", bold: true)
+                        Divider().padding(.leading, 20)
+                        // Pickup location row — tapping opens map picker
+                        Button {
+                            showMapPicker = true
+                        } label: {
+                            HStack {
+                                Text("Location")
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(Color.secondary)
+                                Spacer()
+                                Text(car.neighborhood)
+                                    .font(.system(size: 15))
+                                    .foregroundStyle(Color.primary)
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12))
+                                    .foregroundStyle(Color.secondary)
+                            }
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 14)
+                        }
                     }
                     .background(Color(.systemBackground))
                     .clipShape(RoundedRectangle(cornerRadius: 16))
@@ -337,21 +395,42 @@ struct BookingConfirmationView: View {
                 }
             }
             .safeAreaInset(edge: .bottom) {
-                VStack(spacing: 0) {
+                VStack(spacing: 12) {
                     Divider()
+                    // Get Directions button
+                    Button {
+                        showMapPicker = true
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: "location.fill")
+                            Text("Get Directions to Vehicle")
+                                .font(.system(size: 17, weight: .semibold))
+                        }
+                        .foregroundStyle(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(Color.black)
+                        .clipShape(RoundedRectangle(cornerRadius: 14))
+                        .padding(.horizontal, 20)
+                    }
                     Button { dismiss() } label: {
                         Text("Done")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(.white)
+                            .foregroundStyle(Color.primary)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color.black)
+                            .background(Color(.systemGray6))
                             .clipShape(RoundedRectangle(cornerRadius: 14))
                             .padding(.horizontal, 20)
-                            .padding(.vertical, 12)
                     }
+                    .padding(.bottom, 4)
                 }
                 .background(Color(.systemBackground))
+            }
+            .confirmationDialog("Open in Maps", isPresented: $showMapPicker, titleVisibility: .visible) {
+                MapAppButtons(car: car)
+            } message: {
+                Text(car.address)
             }
         }
     }
@@ -373,6 +452,49 @@ struct ConfirmationRow: View {
         }
         .padding(.horizontal, 20)
         .padding(.vertical, 14)
+    }
+}
+
+// MARK: - Map App Picker Buttons
+
+/// Renders action sheet buttons for every map app installed on the device.
+/// Use inside a `.confirmationDialog` block.
+@ViewBuilder
+func MapAppButtons(car: Car) -> some View {
+    let lat = car.latitude
+    let lon = car.longitude
+    let name = car.name.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+    // Apple Maps — always available
+    Button("Apple Maps") {
+        let coordinate = CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        let placemark = MKPlacemark(coordinate: coordinate)
+        let mapItem = MKMapItem(placemark: placemark)
+        mapItem.name = car.name
+        mapItem.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDriving])
+    }
+
+    // Google Maps — only shown if installed
+    if let googleURL = URL(string: "comgooglemaps://?daddr=\(lat),\(lon)&directionsmode=driving"),
+       UIApplication.shared.canOpenURL(googleURL) {
+        Button("Google Maps") {
+            UIApplication.shared.open(googleURL)
+        }
+    }
+
+    // Waze — only shown if installed
+    if let wazeURL = URL(string: "waze://?ll=\(lat),\(lon)&navigate=yes"),
+       UIApplication.shared.canOpenURL(wazeURL) {
+        Button("Waze") {
+            UIApplication.shared.open(wazeURL)
+        }
+    }
+
+    // Google Maps web fallback (browser) — always available as last resort
+    if let webURL = URL(string: "https://www.google.com/maps/dir/?api=1&destination=\(lat),\(lon)&destination_place_id=\(name)") {
+        Button("Google Maps (Browser)") {
+            UIApplication.shared.open(webURL)
+        }
     }
 }
 

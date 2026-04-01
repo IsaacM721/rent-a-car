@@ -4,12 +4,14 @@
 //
 
 import SwiftUI
+import MapKit
 
 struct CarDetailView: View {
     let car: Car
     @Environment(\.dismiss) private var dismiss
     @State private var isSaved = false
     @State private var showSchedule = true
+    @State private var showMapPicker = false
 
     var body: some View {
         NavigationStack {
@@ -80,7 +82,9 @@ struct CarDetailView: View {
                                     .overlay(Capsule().stroke(Color(.systemGray3), lineWidth: 1.5))
                                 }
 
-                                Button {} label: {
+                                Button {
+                                    showMapPicker = true
+                                } label: {
                                     HStack(spacing: 6) {
                                         Image(systemName: "location")
                                             .font(.system(size: 14, weight: .semibold))
@@ -159,6 +163,11 @@ struct CarDetailView: View {
             }
             .ignoresSafeArea(edges: .top)
             .toolbar(.hidden, for: .navigationBar)
+            .confirmationDialog("Open in Maps", isPresented: $showMapPicker, titleVisibility: .visible) {
+                MapAppButtons(car: car)
+            } message: {
+                Text(car.address)
+            }
         }
     }
 }

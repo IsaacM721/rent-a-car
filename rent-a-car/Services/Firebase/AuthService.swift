@@ -1,8 +1,11 @@
+import Combine
 import FirebaseAuth
 import Foundation
 
 @MainActor
 final class AuthService: ObservableObject {
+    private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
+
     @Published var currentUser: User?
     @Published var isLoading = false
     @Published var errorMessage: String?
@@ -11,12 +14,32 @@ final class AuthService: ObservableObject {
 
     var isLoggedIn: Bool { currentUser != nil }
 
+    /// True once the user has completed or skipped onboarding.
+    /// Stored in UserDefaults keyed by UID so new accounts always see onboarding.
+    var hasCompletedOnboarding: Bool {
+        get {
+            guard let uid = currentUser?.uid else { return false }
+            return UserDefaults.standard.bool(forKey: "onboarding_done_\(uid)")
+        }
+        set {
+            guard let uid = currentUser?.uid else { return }
+            UserDefaults.standard.set(newValue, forKey: "onboarding_done_\(uid)")
+            objectWillChange.send()
+        }
+    }
+
     init() {
         currentUser = Auth.auth().currentUser
-        Auth.auth().addStateDidChangeListener { [weak self] _, user in
+        authStateListenerHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
             Task { @MainActor in
                 self?.currentUser = user
             }
+        }
+    }
+
+    deinit {
+        if let handle = authStateListenerHandle {
+            Auth.auth().removeStateDidChangeListener(handle)
         }
     }
 
@@ -77,4 +100,24 @@ final class AuthService: ObservableObject {
     func clearError() {
         errorMessage = nil
     }
+
+    // MARK: - Skip (anonymous sign-in)
+
+    func skipPhoneAuth() async {
+        isLoading = true
+        errorMessage = nil
+        do {
+            let result = try await Auth.auth().signInAnonymously()
+            currentUser = result.user
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
+    }
+
+    /// Marks onboarding as completed for the current user. Call from a "Skip" button.
+    func skipOnboarding() {
+        hasCompletedOnboarding = true
+    }
 }
+
