@@ -7,7 +7,6 @@ import SwiftUI
 
 struct WalletView: View {
     @Binding var showAdmin: Bool
-    @EnvironmentObject private var subscriptionService: SubscriptionService
 
     @State private var showSaved = false
     @State private var showPaywall = false
@@ -20,12 +19,7 @@ struct WalletView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     BalanceCardView(balanceInDOP: $balanceInDOP)
 
-                    // Show Pro banner if not subscribed, manage subscription if subscribed
-                    if subscriptionService.isPro {
-                        ProStatusCardView(showCustomerCenter: $showCustomerCenter)
-                    } else {
-                        UpgradeToProCardView(showPaywall: $showPaywall)
-                    }
+                    UpgradeToProCardView(showPaywall: $showPaywall)
 
                     CompleteProfileCardView()
                     RecentActivityCardView()
@@ -44,12 +38,6 @@ struct WalletView: View {
                         }
                         Button { showAdmin = true } label: {
                             Label("Manage Vehicles", systemImage: "wrench.and.screwdriver")
-                        }
-                        // Customer Center: manage / cancel subscription from within the app
-                        if subscriptionService.isPro {
-                            Button { showCustomerCenter = true } label: {
-                                Label("Manage Subscription", systemImage: "creditcard")
-                            }
                         }
                     } label: {
                         Image(systemName: "person")
@@ -364,7 +352,6 @@ struct ProStatusCardView: View {
 
 #Preview {
     WalletView(showAdmin: .constant(false))
-        .environmentObject(SubscriptionService())
         .safeAreaInset(edge: .bottom) {
             BottomBar(
                 selectedTab: .constant(.wallet),

@@ -11,7 +11,6 @@ import SwiftUI
 struct rent_a_carApp: App {
     @StateObject private var auth = AuthService()
     @StateObject private var carsStore = CarsStore()
-    @StateObject private var subscriptionService = SubscriptionService()
 
     init() {
         // Configure Firebase
@@ -19,9 +18,6 @@ struct rent_a_carApp: App {
         #if DEBUG
         assert(FirebaseApp.app() != nil, "Firebase failed to configure. Check GoogleService-Info.plist is in the app target and Copy Bundle Resources.")
         #endif
-
-        // Configure RevenueCat — must happen before any Purchases.shared calls
-        SubscriptionService.configure()
     }
 
     var body: some Scene {
@@ -29,9 +25,7 @@ struct rent_a_carApp: App {
             RootGateView()
                 .environmentObject(auth)
                 .environmentObject(carsStore)
-                .environmentObject(subscriptionService)
                 .onAppear { carsStore.start() }
-                .task { await subscriptionService.refresh() }
         }
     }
 }

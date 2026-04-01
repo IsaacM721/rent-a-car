@@ -63,6 +63,8 @@ final class AuthService: ObservableObject {
             }
             verificationID = id
         } catch {
+            let nsErr = error as NSError
+            print("[AuthService] sendOTP error: \(nsErr)\nuserInfo: \(nsErr.userInfo)")
             errorMessage = error.localizedDescription
         }
         isLoading = false

@@ -19,7 +19,15 @@ final class UserRepository {
     // MARK: - Create / update
 
     func saveUser(_ profile: UserProfile) async throws {
-        try await userDoc(uid: profile.uid).setData(from: profile, merge: true)
+        try await FirebaseAsync.withCheckedThrowingContinuation { (completion: @escaping (Result<Void, Error>) -> Void) in
+            do {
+                try self.userDoc(uid: profile.uid).setData(from: profile, merge: true) { error in
+                    if let error { completion(.failure(error)) } else { completion(.success(())) }
+                }
+            } catch {
+                completion(.failure(error))
+            }
+        }
     }
 
     func markPassportVerified(uid: String, passportURL: String) async throws {
