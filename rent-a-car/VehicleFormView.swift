@@ -33,6 +33,8 @@ struct VehicleFormView: View {
     @State private var newImages: [UIImage] = []
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var isSaving = false
+    @State private var saveErrorMessage: String?
+    @State private var showSaveError = false
 
     let vehicleTypes = ["Sedan", "SUV", "Hatchback", "Pickup", "Van", "Convertible"]
     let priceLevels = ["$", "$$", "$$$"]
@@ -146,6 +148,12 @@ struct VehicleFormView: View {
                 }
             }
             .onAppear { loadExistingCar() }
+            .disabled(isSaving)
+            .alert("Couldn't Save Vehicle", isPresented: $showSaveError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(saveErrorMessage ?? "Something went wrong.")
+            }
         }
     }
 
@@ -238,9 +246,8 @@ struct VehicleFormView: View {
                 try await carsStore.update(car: target)
                 dismiss()
             } catch {
-                // Simple MVP: fail silently and keep form open
-                // (We can add an alert UX next pass)
-                print("Failed to save car: \(error)")
+                saveErrorMessage = error.localizedDescription
+                showSaveError = true
                 isSaving = false
             }
         }
