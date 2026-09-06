@@ -182,8 +182,10 @@ struct MapView: View {
 
 struct MapCarCard: View {
     let car: Car
+    @EnvironmentObject private var vehicleStatusStore: VehicleStatusStore
 
     var body: some View {
+        let available = vehicleStatusStore.isAvailable(car)
         VStack(spacing: 0) {
             CarHeroView(car: car, height: 110)
                 .overlay(alignment: .topTrailing) {
@@ -208,13 +210,13 @@ struct MapCarCard: View {
                         .font(.system(size: 13))
                         .foregroundStyle(Color.secondary)
                     HStack(spacing: 4) {
-                        Text(car.isAvailable ? "Available" : "Unavailable")
+                        Text(available ? "Available" : "In Use")
                             .font(.system(size: 13, weight: .medium))
-                            .foregroundStyle(car.isAvailable ? .green : .red)
+                            .foregroundStyle(available ? .green : .red)
                         Text("•")
                             .foregroundStyle(Color.secondary)
                             .font(.system(size: 13))
-                        Text(car.isAvailable ? "Pick up now" : "Available \(car.availableFrom)")
+                        Text(available ? "Pick up now" : "Available \(car.availableFrom)")
                             .font(.system(size: 13))
                             .foregroundStyle(Color.secondary)
                     }
@@ -231,4 +233,6 @@ struct MapCarCard: View {
 
 #Preview {
     MapView()
+        .environmentObject(CarsStore())
+        .environmentObject(VehicleStatusStore())
 }

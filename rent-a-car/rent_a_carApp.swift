@@ -12,6 +12,8 @@ struct rent_a_carApp: App {
     @StateObject private var carsStore = CarsStore()
     @StateObject private var subscriptionService = SubscriptionService()
     @StateObject private var authService = AuthService()
+    @StateObject private var dealerStore = DealerStore()
+    @StateObject private var vehicleStatusStore = VehicleStatusStore()
 
     init() {
         // Configure Firebase
@@ -32,8 +34,16 @@ struct rent_a_carApp: App {
                         .environmentObject(carsStore)
                         .environmentObject(subscriptionService)
                         .environmentObject(authService)
-                        .onAppear { carsStore.start() }
+                        .environmentObject(dealerStore)
+                        .environmentObject(vehicleStatusStore)
+                        .onAppear {
+                            carsStore.start()
+                            vehicleStatusStore.start()
+                        }
                         .task { await subscriptionService.refresh() }
+                        .task(id: authService.currentUser?.uid) {
+                            await dealerStore.refresh(uid: authService.currentUser?.uid)
+                        }
                 } else {
                     PhoneAuthView()
                         .environmentObject(authService)

@@ -141,18 +141,17 @@ struct IdentityVerificationView: View {
 
     private func uploadPassport() async {
         guard let uid = auth.currentUser?.uid,
-              let image = passportImage,
-              let jpegData = image.jpegData(compressionQuality: 0.85) else { return }
+              let image = passportImage else { return }
 
         isUploading = true
         uploadError = nil
 
         do {
             let url = try await storageService.uploadJPEG(
-                jpegData,
+                image,
                 path: "passports/\(uid).jpg"
             )
-            try await userRepo.markPassportVerified(uid: uid, passportURL: url)
+            try await userRepo.markPassportVerified(uid: uid, passportURL: url.absoluteString)
             dismiss()
         } catch {
             uploadError = "Upload failed: \(error.localizedDescription)"

@@ -9,6 +9,8 @@ import UniformTypeIdentifiers
 struct AdminView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var carsStore: CarsStore
+    @EnvironmentObject private var authService: AuthService
+    @EnvironmentObject private var dealerStore: DealerStore
 
     @State private var showAddForm = false
     @State private var editingCar: Car?
@@ -19,35 +21,49 @@ struct AdminView: View {
     @State private var importURL: URL?
     @State private var errorMessage: String?
     @State private var showError = false
+    @State private var showOnboarding = false
+
+    /// Only this dealer's own listings — every other dealer's fleet is invisible here.
+    private var myCars: [Car] {
+        guard let uid = authService.currentUser?.uid else { return [] }
+        return carsStore.cars.filter { $0.ownerId == uid }
+    }
 
     var body: some View {
         NavigationStack {
-            List {
-                ForEach(carsStore.cars) { car in
-                    Button {
-                        editingCar = car
-                    } label: {
-                        HStack(spacing: 12) {
-                            CarLogoView(car: car, size: 44)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(car.name)
-                                    .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(Color.primary)
-                                Text("\(car.type) · \(car.neighborhood)")
-                                    .font(.system(size: 13))
-                                    .foregroundStyle(Color.secondary)
+            Group {
+                if dealerStore.isOnboarded {
+                    List {
+                        ForEach(myCars) { car in
+                            HStack(spacing: 12) {
+                                Button {
+                                    editingCar = car
+                                } label: {
+                                    HStack(spacing: 12) {
+                                        CarLogoView(car: car, size: 44)
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(car.name)
+                                                .font(.system(size: 15, weight: .semibold))
+                                                .foregroundStyle(Color.primary)
+                                            Text("\(car.type) · \(car.neighborhood)")
+                                                .font(.system(size: 13))
+                                                .foregroundStyle(Color.secondary)
+                                        }
+                                    }
+                                }
+                                .buttonStyle(.plain)
+                                Spacer()
+                                InUseSwitch(car: car)
                             }
-                            Spacer()
-                            Circle()
-                                .fill(car.isAvailable ? Color.green : Color.red)
-                                .frame(width: 8, height: 8)
+                            .padding(.vertical, 4)
                         }
-                        .padding(.vertical, 4)
+                        .onDelete(perform: deleteCars)
                     }
+                    .listStyle(.plain)
+                } else {
+                    dealerPrompt
                 }
-                .onDelete(perform: deleteCars)
             }
-            .listStyle(.plain)
             .navigationTitle("Manage Vehicles")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -60,33 +76,41 @@ struct AdminView: View {
                             .background(Color(.systemGray5), in: Circle())
                     }
                 }
-                ToolbarItemGroup(placement: .topBarTrailing) {
-                    Menu {
-                        Button {
-                            exportSeed()
+                if dealerStore.isOnboarded {
+                    ToolbarItemGroup(placement: .topBarTrailing) {
+                        Menu {
+                            Button {
+                                exportSeed()
+                            } label: {
+                                Label("Export Seed", systemImage: "square.and.arrow.up")
+                            }
+                            Button {
+                                showImporter = true
+                            } label: {
+                                Label("Import Seed", systemImage: "square.and.arrow.down")
+                            }
                         } label: {
-                            Label("Export Seed", systemImage: "square.and.arrow.up")
+                            Image(systemName: "ellipsis.circle")
+                                .font(.system(size: 18))
+                                .foregroundStyle(Color.primary)
                         }
-                        Button {
-                            showImporter = true
-                        } label: {
-                            Label("Import Seed", systemImage: "square.and.arrow.down")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis.circle")
-                            .font(.system(size: 18))
-                            .foregroundStyle(Color.primary)
-                    }
 
-                    Button {
-                        showAddForm = true
-                    } label: {
-                        Image(systemName: "plus")
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Color.primary)
+                        Button {
+                            showAddForm = true
+                        } label: {
+                            Image(systemName: "plus")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(Color.primary)
+                        }
                     }
                 }
             }
+        }
+        .task(id: authService.currentUser?.uid) {
+            await dealerStore.refresh(uid: authService.currentUser?.uid)
+        }
+        .sheet(isPresented: $showOnboarding) {
+            DealerOnboardingView()
         }
         .sheet(isPresented: $showAddForm) {
             VehicleFormView()
@@ -127,9 +151,40 @@ struct AdminView: View {
         }
     }
 
+    private var dealerPrompt: some View {
+        VStack(spacing: 20) {
+            Spacer()
+            Image(systemName: "car.2.fill")
+                .font(.system(size: 44))
+                .foregroundStyle(Color.secondary)
+            VStack(spacing: 8) {
+                Text("Become a Dealer")
+                    .font(.system(size: 22, weight: .bold))
+                Text("Set up your dealer profile to start listing vehicles and setting your own prices.")
+                    .font(.system(size: 15))
+                    .foregroundStyle(Color.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 32)
+            }
+            Button {
+                showOnboarding = true
+            } label: {
+                Text("Get Started")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(.white)
+                    .padding(.horizontal, 32)
+                    .padding(.vertical, 14)
+                    .background(Color.black)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+            Spacer()
+            Spacer()
+        }
+    }
+
     private func deleteCars(at offsets: IndexSet) {
         for index in offsets {
-            let car = carsStore.cars[index]
+            let car = myCars[index]
             if let id = car.docId {
                 Task {
                     do {

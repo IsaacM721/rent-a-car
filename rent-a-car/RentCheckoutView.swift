@@ -8,16 +8,25 @@ import SwiftUI
 struct RentCheckoutView: View {
     let car: Car
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var vehicleStatusStore: VehicleStatusStore
+    @EnvironmentObject private var authService: AuthService
 
     @State private var startDate = Date()
     @State private var endDate = Calendar.current.date(byAdding: .day, value: 3, to: Date()) ?? Date()
     @State private var selectedPayment: PaymentMethod = .none
     @State private var showAddCard = false
     @State private var showConfirmation = false
+    @State private var isReserving = false
+    @State private var reserveErrorMessage: String?
+    @State private var showReserveError = false
+
+    private let bookingRepository = BookingRepository()
 
     enum PaymentMethod {
         case none, card, dop
     }
+
+    private var isCarAvailable: Bool { vehicleStatusStore.isAvailable(car) }
 
     private var rentalDays: Int {
         max(1, Calendar.current.dateComponents([.day], from: startDate, to: endDate).day ?? 1)
@@ -62,6 +71,18 @@ struct RentCheckoutView: View {
                     }
                     .padding(20)
                     .background(Color(.systemBackground))
+
+                    if !isCarAvailable {
+                        HStack(spacing: 10) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Text("This car is currently in use by another renter and can't be booked right now.")
+                                .font(.system(size: 14))
+                                .foregroundStyle(Color.primary)
+                        }
+                        .padding(16)
+                        .background(Color.orange.opacity(0.12))
+                    }
 
                     Divider()
 
@@ -183,21 +204,22 @@ struct RentCheckoutView: View {
                 VStack(spacing: 0) {
                     Divider()
                     Button {
-                        showConfirmation = true
+                        reserve()
                     } label: {
-                        HStack {
-                            Text("Reserve · $\(String(format: "%.2f", total))")
+                        HStack(spacing: 10) {
+                            if isReserving { ProgressView().tint(.white) }
+                            Text(isReserving ? "Reserving…" : "Reserve · $\(String(format: "%.2f", total))")
                                 .font(.system(size: 17, weight: .semibold))
                                 .foregroundStyle(.white)
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(selectedPayment == .none ? Color(.systemGray3) : Color.black)
+                        .background(canReserve ? Color.black : Color(.systemGray3))
                         .clipShape(RoundedRectangle(cornerRadius: 14))
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
                     }
-                    .disabled(selectedPayment == .none)
+                    .disabled(!canReserve)
                 }
                 .background(Color(.systemBackground))
             }
@@ -207,6 +229,53 @@ struct RentCheckoutView: View {
         }
         .sheet(isPresented: $showConfirmation) {
             BookingConfirmationView(car: car, startDate: startDate, endDate: endDate, total: total)
+        }
+        .alert("Couldn't Reserve", isPresented: $showReserveError) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(reserveErrorMessage ?? "Something went wrong.")
+        }
+    }
+
+    // MARK: - Reservation
+
+    private var canReserve: Bool {
+        selectedPayment != .none && !isReserving && isCarAvailable
+    }
+
+    private func reserve() {
+        guard canReserve else { return }
+        isReserving = true
+
+        Task {
+            do {
+                guard isCarAvailable else {
+                    throw NSError(domain: "RentCheckoutView", code: 1, userInfo: [
+                        NSLocalizedDescriptionKey: "This car was just marked in use. Please choose another car."
+                    ])
+                }
+
+                let booking = BookingDoc(
+                    docId: nil,
+                    carId: car.id,
+                    carName: car.name,
+                    vehicleStatusKey: car.vehicleStatusKey,
+                    dealerId: car.ownerId,
+                    renterId: authService.currentUser?.uid ?? "",
+                    startDate: startDate,
+                    endDate: endDate,
+                    total: total,
+                    status: "active",
+                    createdAt: nil
+                )
+                let bookingId = try await bookingRepository.createBooking(booking)
+                try await vehicleStatusStore.setInUse(car, inUse: true, dealerId: car.ownerId, activeBookingId: bookingId)
+                showConfirmation = true
+            } catch {
+                reserveErrorMessage = error.localizedDescription
+                showReserveError = true
+            }
+            isReserving = false
         }
     }
 }
@@ -378,4 +447,6 @@ struct ConfirmationRow: View {
 
 #Preview {
     RentCheckoutView(car: sampleCars[0])
+        .environmentObject(VehicleStatusStore())
+        .environmentObject(AuthService())
 }

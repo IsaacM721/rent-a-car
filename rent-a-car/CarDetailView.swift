@@ -8,8 +8,12 @@ import SwiftUI
 struct CarDetailView: View {
     let car: Car
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var vehicleStatusStore: VehicleStatusStore
     @State private var isSaved = false
     @State private var showSchedule = true
+    @State private var showCheckout = false
+
+    private var isAvailable: Bool { vehicleStatusStore.isAvailable(car) }
 
     var body: some View {
         NavigationStack {
@@ -50,12 +54,12 @@ struct CarDetailView: View {
                                     .font(.system(size: 15))
                                     .foregroundStyle(Color.secondary)
                                 HStack(spacing: 4) {
-                                    Text(car.isAvailable ? "Available" : "Unavailable")
+                                    Text(isAvailable ? "Available" : "In Use")
                                         .font(.system(size: 14, weight: .medium))
-                                        .foregroundStyle(car.isAvailable ? .green : .red)
+                                        .foregroundStyle(isAvailable ? .green : .red)
                                     Text("•")
                                         .foregroundStyle(Color.secondary)
-                                    Text(car.isAvailable ? "Pick up now" : "Available \(car.availableFrom)")
+                                    Text(isAvailable ? "Pick up now" : "Available \(car.availableFrom)")
                                         .font(.system(size: 14))
                                         .foregroundStyle(Color.secondary)
                                 }
@@ -126,7 +130,7 @@ struct CarDetailView: View {
                             }
 
                             if showSchedule {
-                                Text(car.isAvailable ? "Available now" : "Available \(car.availableFrom)")
+                                Text(isAvailable ? "Available now" : "Available \(car.availableFrom)")
                                     .font(.system(size: 15))
                                     .foregroundStyle(Color.secondary)
                                     .padding(.top, 10)
@@ -159,10 +163,34 @@ struct CarDetailView: View {
             }
             .ignoresSafeArea(edges: .top)
             .toolbar(.hidden, for: .navigationBar)
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: 0) {
+                    Divider()
+                    Button {
+                        showCheckout = true
+                    } label: {
+                        Text(isAvailable ? "Rent This Car" : "Currently In Use")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(isAvailable ? Color.black : Color(.systemGray3))
+                            .clipShape(RoundedRectangle(cornerRadius: 14))
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                    }
+                    .disabled(!isAvailable)
+                }
+                .background(.regularMaterial)
+            }
+        }
+        .sheet(isPresented: $showCheckout) {
+            RentCheckoutView(car: car)
         }
     }
 }
 
 #Preview {
     CarDetailView(car: sampleCars[1])
+        .environmentObject(VehicleStatusStore())
 }

@@ -10,6 +10,7 @@ import UIKit
 struct VehicleFormView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var carsStore: CarsStore
+    @EnvironmentObject private var authService: AuthService
 
     // If non-nil, we're editing an existing car
     var car: Car?
@@ -27,6 +28,7 @@ struct VehicleFormView: View {
     @State private var longitude = "-69.9312"
     @State private var logoInitials = ""
     @State private var logoColor = Color(red: 0.2, green: 0.2, blue: 0.8)
+    @State private var sharedVehicleCode = ""
 
     // Photos (MVP: URLs; upload added in next task)
     @State private var photoURLs: [String] = []
@@ -103,6 +105,25 @@ struct VehicleFormView: View {
                         .keyboardType(.decimalPad)
                 }
 
+                Section {
+                    TextField("e.g. plate or VIN", text: $sharedVehicleCode)
+                        .autocorrectionDisabled()
+                        .textInputAutocapitalization(.characters)
+                    if let car, !car.id.isEmpty {
+                        HStack {
+                            Text("This car's code")
+                                .foregroundStyle(Color.secondary)
+                            Spacer()
+                            Text(sharedVehicleCode.isEmpty ? car.id : sharedVehicleCode)
+                                .font(.system(.footnote, design: .monospaced))
+                        }
+                    }
+                } header: {
+                    Text("Shared With Other Dealers")
+                } footer: {
+                    Text("If another dealer already lists this exact physical car, enter the same code they use. Marking it in use on either listing will mark it in use on both, so it can't be handed out twice.")
+                }
+
                 Section("Photos") {
                     if !photoURLs.isEmpty || !newImages.isEmpty {
                         ScrollView(.horizontal, showsIndicators: false) {
@@ -174,6 +195,7 @@ struct VehicleFormView: View {
         logoInitials = car.logo.initials
         logoColor = car.logoColor
         photoURLs = car.photoURLs
+        sharedVehicleCode = car.sharedVehicleCode
     }
 
     private func loadPickerItems(_ items: [PhotosPickerItem]) {
@@ -194,6 +216,7 @@ struct VehicleFormView: View {
         let rgb = logoColor.rgbComponents
         let lat = Double(latitude) ?? 18.4861
         let lon = Double(longitude) ?? -69.9312
+        let ownerId = authService.currentUser?.uid ?? ""
 
         var target = car ?? Car(
             docId: nil,
@@ -209,7 +232,8 @@ struct VehicleFormView: View {
             longitude: lon,
             photoURLs: photoURLs,
             logo: .init(r: rgb.r, g: rgb.g, b: rgb.b, initials: logoInitials),
-            isActive: true
+            isActive: true,
+            ownerId: ownerId
         )
 
         target.name = name
@@ -224,6 +248,8 @@ struct VehicleFormView: View {
         target.longitude = lon
         target.photoURLs = photoURLs
         target.logo = .init(r: rgb.r, g: rgb.g, b: rgb.b, initials: logoInitials)
+        target.ownerId = ownerId
+        target.sharedVehicleCode = sharedVehicleCode.trimmingCharacters(in: .whitespacesAndNewlines)
 
         Task {
             do {
