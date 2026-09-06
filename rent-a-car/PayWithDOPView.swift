@@ -8,11 +8,13 @@ import SwiftUI
 struct PayWithDOPView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var carsStore: CarsStore
+    @EnvironmentObject private var vehicleStatusStore: VehicleStatusStore
     @State private var selectedCar: Car?
 
     var body: some View {
         NavigationStack {
             List(carsStore.cars) { car in
+                let available = vehicleStatusStore.isAvailable(car)
                 Button {
                     selectedCar = car
                 } label: {
@@ -27,13 +29,13 @@ struct PayWithDOPView: View {
                                 .font(.system(size: 14))
                                 .foregroundStyle(Color.secondary)
                             HStack(spacing: 4) {
-                                Text(car.isAvailable ? "Available" : "Unavailable")
+                                Text(available ? "Available" : "In Use")
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundStyle(car.isAvailable ? .green : .red)
+                                    .foregroundStyle(available ? .green : .red)
                                 Text("•")
                                     .font(.system(size: 13))
                                     .foregroundStyle(Color.secondary)
-                                Text(car.isAvailable ? "Pick up now" : "Available \(car.availableFrom)")
+                                Text(available ? "Pick up now" : "Available \(car.availableFrom)")
                                     .font(.system(size: 13))
                                     .foregroundStyle(Color.secondary)
                             }
@@ -65,4 +67,6 @@ struct PayWithDOPView: View {
 
 #Preview {
     PayWithDOPView()
+        .environmentObject(CarsStore())
+        .environmentObject(VehicleStatusStore())
 }

@@ -11,6 +11,9 @@ import SwiftUI
 struct rent_a_carApp: App {
     @StateObject private var carsStore = CarsStore()
     @StateObject private var subscriptionService = SubscriptionService()
+    @StateObject private var authService = AuthService()
+    @StateObject private var dealerStore = DealerStore()
+    @StateObject private var vehicleStatusStore = VehicleStatusStore()
 
     init() {
         // Configure Firebase
@@ -25,11 +28,27 @@ struct rent_a_carApp: App {
 
     var body: some Scene {
         WindowGroup {
-            AppRootView()
-                .environmentObject(carsStore)
-                .environmentObject(subscriptionService)
-                .onAppear { carsStore.start() }
-                .task { await subscriptionService.refresh() }
+            Group {
+                if authService.isLoggedIn {
+                    AppRootView()
+                        .environmentObject(carsStore)
+                        .environmentObject(subscriptionService)
+                        .environmentObject(authService)
+                        .environmentObject(dealerStore)
+                        .environmentObject(vehicleStatusStore)
+                        .onAppear {
+                            carsStore.start()
+                            vehicleStatusStore.start()
+                        }
+                        .task { await subscriptionService.refresh() }
+                        .task(id: authService.currentUser?.uid) {
+                            await dealerStore.refresh(uid: authService.currentUser?.uid)
+                        }
+                } else {
+                    PhoneAuthView()
+                        .environmentObject(authService)
+                }
+            }
         }
     }
 }

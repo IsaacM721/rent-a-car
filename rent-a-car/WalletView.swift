@@ -8,6 +8,7 @@ import SwiftUI
 struct WalletView: View {
     @Binding var showAdmin: Bool
     @EnvironmentObject private var subscriptionService: SubscriptionService
+    @EnvironmentObject private var authService: AuthService
 
     @State private var showSaved = false
     @State private var showPaywall = false
@@ -50,6 +51,9 @@ struct WalletView: View {
                             Button { showCustomerCenter = true } label: {
                                 Label("Manage Subscription", systemImage: "creditcard")
                             }
+                        }
+                        Button(role: .destructive) { authService.signOut() } label: {
+                            Label("Sign Out", systemImage: "rectangle.portrait.and.arrow.right")
                         }
                     } label: {
                         Image(systemName: "person")
@@ -365,6 +369,7 @@ struct ProStatusCardView: View {
 #Preview {
     WalletView(showAdmin: .constant(false))
         .environmentObject(SubscriptionService())
+        .environmentObject(AuthService())
         .safeAreaInset(edge: .bottom) {
             BottomBar(
                 selectedTab: .constant(.wallet),
